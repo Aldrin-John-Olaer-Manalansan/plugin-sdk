@@ -74,7 +74,7 @@ void CMatrix::SetScale(float scale)
 }
 
 void CMatrix::SetScale(CVector const &scale) {
-	SetScale(pos.x, pos.y, pos.z);
+	SetScale(scale.x, scale.y, scale.z);
 }
 
 // scale on three axes
@@ -83,8 +83,8 @@ void CMatrix::SetScale(float x, float y, float z)
 	((void (__thiscall *)(CMatrix *, float, float, float))0x59AF00)(this, x, y, z);
 }
 
-void CMatrix::SetTranslateOnly(CVector const &pos) {
-	SetTranslateOnly(pos.x, pos.y, pos.z);
+void CMatrix::SetTranslateOnly(CVector const &newPos) {
+	SetTranslateOnly(newPos.x, newPos.y, newPos.z);
 }
 
 void CMatrix::SetTranslateOnly(float x, float y, float z)
@@ -92,8 +92,8 @@ void CMatrix::SetTranslateOnly(float x, float y, float z)
 	((void (__thiscall *)(CMatrix *, float, float, float))0x59AF80)(this, x, y, z);
 }
 
-void CMatrix::SetTranslate(CVector const &pos) {
-	SetTranslate(pos.x, pos.y, pos.z);
+void CMatrix::SetTranslate(CVector const &newPos) {
+	SetTranslate(newPos.x, newPos.y, newPos.z);
 }
 
 // like previous + reset orientation
