@@ -11,17 +11,17 @@
 
 class CMatrix {
 public:
-	enum class e_EulerAngleType : uint8_t {
+	enum class e_EulerAngleType : unsigned char {
 		TaitBryan,     // three distinct axes (yaw/pitch/roll style)
 		ProperEuler    // repeated axis (e.g. ZXZ, XYX)
 	};
 
 	struct t_EulerAngleConversionFlags {
-		uint8_t swapXAndZ: 1; // if set, treats the X axis as Yaw, Z-axis at Pitch
-		uint8_t angleType: 1; // see e_EulerAngleType
-		uint8_t isFlipped: 1;  // if set negate all three angles
-		uint8_t primaryAxisIndex: 2; // index (0..3) into byte_866D9C[] that selects primary axis/order
-		// NOTE: the game always uses 0x15 as the convertion flags
+		unsigned char swapXAndZ: 1 = true; // if set, treats the X axis as Yaw, Z-axis at Pitch
+		unsigned char angleType: 1 = true; // see e_EulerAngleType
+		unsigned char isFlipped: 1 = true;  // if set negate all three angles
+		unsigned char primaryAxisIndex: 2 = 1; // index (0, 1, 2) into byte_866D9C[] that selects primary axis/order
+		// Default Value: the game always uses 0x15 as the convertion flags
 	};
 
 	VALIDATE_SIZE(t_EulerAngleConversionFlags, 1);
@@ -77,9 +77,9 @@ public:
 	void RotateZ(float yaw);
 	void Rotate(CVector const &rotation);
 	void Rotate(float pitch, float roll, float yaw); // rotate on 3 axes
-	CVector ConvertToEulerAngles(t_EulerAngleConversionFlags flags);
-	void ConvertFromEulerAngles(CVector rotation, t_EulerAngleConversionFlags flags);
-	void ConvertFromEulerAngles(float x, float y, float z, t_EulerAngleConversionFlags flags);
+	CVector ConvertToEulerAngles(t_EulerAngleConversionFlags flags = {});
+	void ConvertFromEulerAngles(CVector rotation, t_EulerAngleConversionFlags flags = {});
+	void ConvertFromEulerAngles(float x, float y, float z, t_EulerAngleConversionFlags flags = {});
 	void Translate(CVector const &offset);
 	void Translate(float x, float y, float z); // move the position
 	void Reorthogonalise();
