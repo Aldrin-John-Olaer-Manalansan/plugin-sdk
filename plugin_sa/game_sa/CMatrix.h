@@ -95,10 +95,8 @@ public:
 	void RotateZ(float yaw);
 	void Rotate(CVector const &rotation);
 	void Rotate(float pitch, float roll, float yaw); // rotate on 3 axes
-	void ConvertToEulerAngles(float &x, float &y, float &z, CMatrix::t_EulerAngleConversionSetup flags) const;
-	CVector ConvertToEulerAngles(t_EulerAngleConversionSetup flags) const;
-	void ConvertFromEulerAngles(CVector const &rotation, t_EulerAngleConversionSetup flags);
-	void ConvertFromEulerAngles(float x, float y, float z, t_EulerAngleConversionSetup flags);
+	void ConvertToEulerAngles(float &initial, float &intermediate, float &final, CMatrix::t_EulerAngleConversionSetup flags) const;
+	void ConvertFromEulerAngles(float initial, float intermediate, float final, t_EulerAngleConversionSetup flags);
 	void Translate(CVector const &offset);
 	void Translate(float x, float y, float z); // move the position
 	void Reorthogonalise();
