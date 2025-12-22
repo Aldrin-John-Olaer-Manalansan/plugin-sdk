@@ -24,8 +24,8 @@ public:
 		/*
 		 * Tested Combinations:
 		 * { true,  true,  true, 1} = 0x0F: Always used by the game
-		 * {false, false, false, 2} = 0x10: Returns Relative Angles(yaw, pitch, roll) without negation(less CPU Cycles)
-		 * {false, false,  true, 2} = 0x14: Returns Relative Angles(yaw, pitch, roll) that matches the angles returned by Native Commands
+		 * {false, false, false, 2} = 0x10: Returns Relative Angles(x=yaw, y=pitch, z=roll) without negation(less CPU Cycles)
+		 * {false, false,  true, 2} = 0x14: Returns Relative Angles(x=yaw, y=pitch, z=roll) that matches the angles returned by Native Commands
 		 */
 	};
 
@@ -82,8 +82,9 @@ public:
 	void RotateZ(float yaw);
 	void Rotate(CVector const &rotation);
 	void Rotate(float pitch, float roll, float yaw); // rotate on 3 axes
+	void ConvertToEulerAngles(float &x, float &y, float &z, CMatrix::t_EulerAngleConversionFlags flags = {}) const;
 	CVector ConvertToEulerAngles(t_EulerAngleConversionFlags flags = {}) const;
-	void ConvertFromEulerAngles(CVector rotation, t_EulerAngleConversionFlags flags = {});
+	void ConvertFromEulerAngles(CVector const &rotation, t_EulerAngleConversionFlags flags = {});
 	void ConvertFromEulerAngles(float x, float y, float z, t_EulerAngleConversionFlags flags = {});
 	void Translate(CVector const &offset);
 	void Translate(float x, float y, float z); // move the position
