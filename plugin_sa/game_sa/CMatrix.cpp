@@ -202,21 +202,21 @@ void CMatrix::Scale(float x, float y, float z) {
     plugin::CallMethod<0x459350, CMatrix *, float, float, float>(this, x, y, z);
 }
 
-void CMatrix::ConvertToEulerAngles(float &x, float &y, float &z, CMatrix::t_EulerAngleConversionFlags flags) const {
-	plugin::CallMethod<0x59A840, const CMatrix*, float*, float*, float*, t_EulerAngleConversionFlags>(this, &x, &y, &z, flags);
+void CMatrix::ConvertToEulerAngles(float &x, float &y, float &z, CMatrix::t_EulerAngleConversionSetup flags) const {
+	plugin::CallMethod<0x59A840, const CMatrix*, float*, float*, float*, t_EulerAngleConversionSetup>(this, &x, &y, &z, flags);
 }
 
-CVector CMatrix::ConvertToEulerAngles(CMatrix::t_EulerAngleConversionFlags flags) const {
+CVector CMatrix::ConvertToEulerAngles(CMatrix::t_EulerAngleConversionSetup flags) const {
 	CVector rotation;
 	ConvertToEulerAngles(rotation.x, rotation.y, rotation.z, flags);
 	return rotation;
 }
 
-void CMatrix::ConvertFromEulerAngles(float x, float y, float z, CMatrix::t_EulerAngleConversionFlags flags) {
-	plugin::CallMethod<0x59AA40, CMatrix*, float, float, float, t_EulerAngleConversionFlags>(this, x, y, z, flags);
+void CMatrix::ConvertFromEulerAngles(float x, float y, float z, CMatrix::t_EulerAngleConversionSetup flags) {
+	plugin::CallMethod<0x59AA40, CMatrix*, float, float, float, t_EulerAngleConversionSetup>(this, x, y, z, flags);
 }
 
-void CMatrix::ConvertFromEulerAngles(CVector const &rotation, CMatrix::t_EulerAngleConversionFlags flags) {
+void CMatrix::ConvertFromEulerAngles(CVector const &rotation, CMatrix::t_EulerAngleConversionSetup flags) {
 	ConvertFromEulerAngles(rotation.x, rotation.y, rotation.z, flags);
 }
 

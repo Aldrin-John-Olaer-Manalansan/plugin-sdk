@@ -11,16 +11,29 @@
 
 class CMatrix {
 public:
-	enum class e_EulerAngleType : unsigned char {
-		TaitBryan,     // three distinct axes (yaw/pitch/roll style)
-		ProperEuler    // repeated axis (e.g. ZXZ, XYX)
-	};
+	union t_EulerAngleConversionSetup {
+		enum class e_AngleType : unsigned char {
+			TaitBryan,     // three distinct axes (yaw/pitch/roll style)
+			ProperEuler,   // repeated axis (e.g. ZXZ, XYX)
+		};
+		enum class e_RotationSequence : unsigned char {
+			// Tait-Bryan Sequence
+			ZXY = 0b10000, // YawPitchRoll
+			YXZ = 0b10001, // RollPitchYaw
+			ZYX = 0b10100, // YawRollPitch
+			XYZ = 0b10101, // PitchRollYaw
+			// XZY = ?,
+			// YZX = ?,
 
-	struct t_EulerAngleConversionFlags {
-		unsigned char swapXAndZ: 1 = false;
-		unsigned char angleType: 1 = false; // see e_EulerAngleType
-		unsigned char isFlipped: 1 = false; // if set negate all three angles
-		unsigned char primaryAxisIndex: 2 = 2; // index (0, 1, 2) into byte_866D9C[] that selects primary axis/order
+			// The rest of the remaining sequence are yet to discover
+			// ...
+		} sequence;
+		struct {
+			bool swapXAndZ: 1;
+			e_AngleType angleType: 1;
+			bool swapYAndZ: 1;
+			unsigned char primaryAxisIndex: 2; // index (0, 1, 2) into byte_866D9C[] that selects primary axis/order
+        } flags;
 		/*
 		 * Tested Combinations:
 		 * { true,  true,  true, 1} = 0x0F: Always used by the game
@@ -29,7 +42,7 @@ public:
 		 */
 	};
 
-	VALIDATE_SIZE(t_EulerAngleConversionFlags, 1);
+	VALIDATE_SIZE(t_EulerAngleConversionSetup, 1);
 
     // RwV3d-like:
     CVector      right; // x-axis
@@ -82,10 +95,10 @@ public:
 	void RotateZ(float yaw);
 	void Rotate(CVector const &rotation);
 	void Rotate(float pitch, float roll, float yaw); // rotate on 3 axes
-	void ConvertToEulerAngles(float &x, float &y, float &z, CMatrix::t_EulerAngleConversionFlags flags = {}) const;
-	CVector ConvertToEulerAngles(t_EulerAngleConversionFlags flags = {}) const;
-	void ConvertFromEulerAngles(CVector const &rotation, t_EulerAngleConversionFlags flags = {});
-	void ConvertFromEulerAngles(float x, float y, float z, t_EulerAngleConversionFlags flags = {});
+	void ConvertToEulerAngles(float &x, float &y, float &z, CMatrix::t_EulerAngleConversionSetup flags) const;
+	CVector ConvertToEulerAngles(t_EulerAngleConversionSetup flags) const;
+	void ConvertFromEulerAngles(CVector const &rotation, t_EulerAngleConversionSetup flags);
+	void ConvertFromEulerAngles(float x, float y, float z, t_EulerAngleConversionSetup flags);
 	void Translate(CVector const &offset);
 	void Translate(float x, float y, float z); // move the position
 	void Reorthogonalise();
