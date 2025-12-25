@@ -42,8 +42,10 @@ CVehicle * FindPlayerVehicle(int playerId = -1, bool bIncludeRemote = false);
 bool InTwoPlayersMode();
 // vectorsub
 CVector VectorSub(CVector const& from, CVector const& what);
-// matrix mul
-CVector Multiply3x3(CMatrix  const& matrix, CVector  const& vec);
+// matrix * vector
+CVector Multiply3x3(CMatrix  const& matrix, CVector  const& vector);
+// transposed matrix * vector
+CVector MultiplyTransposed3x3(CMatrix const& matrix, CVector const& vector);
 // returns player wanted
 CWanted * FindPlayerWanted(int playerId = -1);
 

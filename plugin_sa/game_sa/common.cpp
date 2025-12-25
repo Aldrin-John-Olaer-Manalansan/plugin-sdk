@@ -71,9 +71,14 @@ CVector VectorSub(CVector const& from, CVector const& what)
 	return ((CVector (__cdecl *)(CVector const&, CVector const&))0x40FE60)(from, what);
 }
 
-CVector Multiply3x3(CMatrix  const& matrix, CVector  const& vec)
+CVector Multiply3x3(CMatrix const& matrix, CVector const& vec)
 {
-	return ((CVector (__cdecl *)(CMatrix  const&, CVector  const&))0x59C790)(matrix, vec);
+	return plugin::CallAndReturn<CVector, 0x59C790, CMatrix  const&, CVector  const&>(matrix, vec);
+}
+
+CVector MultiplyTransposed3x3(CMatrix const& matrix, CVector const& vec)
+{
+	return plugin::CallAndReturn<CVector, 0x59C810, CVector  const&, CMatrix  const&>(vec, matrix);
 }
 
 CWanted * FindPlayerWanted(int playerId)

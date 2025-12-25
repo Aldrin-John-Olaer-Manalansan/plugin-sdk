@@ -18,12 +18,12 @@ public:
 		};
 		enum class e_RotationSequence : unsigned char {
 			// Tait-Bryan Sequence
-			ZXY = 0b10000, // YawPitchRoll
-			YXZ = 0b10001, // RollPitchYaw
-			ZYX = 0b10100, // YawRollPitch
-			XYZ = 0b10101, // PitchRollYaw
-			// XZY = ?,
-			// YZX = ?,
+			ZXY = 0b10000, // 16 = YawPitchRoll
+			YXZ = 0b10001, // 17 = RollPitchYaw
+			ZYX = 0b10100, // 20 = YawRollPitch
+			XYZ = 0b10101, // 21 = PitchRollYaw
+			// XZY = ?,	   //  ? = PitchYawRoll
+			// YZX = ?,	   //  ? = RollYawPitch
 
 			// The rest of the remaining sequence are yet to discover
 			// ...
@@ -33,13 +33,7 @@ public:
 			e_AngleType angleType: 1;
 			bool swapYAndZ: 1;
 			unsigned char primaryAxisIndex: 2; // index (0, 1, 2) into byte_866D9C[] that selects primary axis/order
-        } flags;
-		/*
-		 * Tested Combinations:
-		 * { true,  true,  true, 1} = 0x0F: Always used by the game
-		 * {false, false, false, 2} = 0x10: Returns Relative Angles(x=yaw, y=pitch, z=roll) without negation(less CPU Cycles)
-		 * {false, false,  true, 2} = 0x14: Returns Relative Angles(x=yaw, y=pitch, z=roll) that matches the angles returned by Native Commands
-		 */
+	    } flags; // { true,  1,  true, 1} = 0x0F: is Always used by the game
 	};
 
 	VALIDATE_SIZE(t_EulerAngleConversionSetup, 1);
@@ -95,7 +89,7 @@ public:
 	void RotateZ(float yaw);
 	void Rotate(CVector const &rotation);
 	void Rotate(float pitch, float roll, float yaw); // rotate on 3 axes
-	void ConvertToEulerAngles(float &initial, float &intermediate, float &final, CMatrix::t_EulerAngleConversionSetup flags) const;
+	void ConvertToEulerAngles(float &initial, float &intermediate, float &final, t_EulerAngleConversionSetup flags) const;
 	void ConvertFromEulerAngles(float initial, float intermediate, float final, t_EulerAngleConversionSetup flags);
 	void Translate(CVector const &offset);
 	void Translate(float x, float y, float z); // move the position
