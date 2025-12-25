@@ -11,32 +11,31 @@
 
 class CMatrix {
 public:
-	union t_EulerAngleConversionSetup {
-		enum class e_AngleType : unsigned char {
-			TaitBryan,     // three distinct axes (yaw/pitch/roll style)
-			ProperEuler,   // repeated axis (e.g. ZXZ, XYX)
-		};
-		enum class e_RotationSequence : unsigned char {
-			// Tait-Bryan Sequence
-			ZXY = 0b10000, // 16 = YawPitchRoll
-			YXZ = 0b10001, // 17 = RollPitchYaw
-			ZYX = 0b10100, // 20 = YawRollPitch
-			XYZ = 0b10101, // 21 = PitchRollYaw
-			// XZY = ?,	   //  ? = PitchYawRoll
-			// YZX = ?,	   //  ? = RollYawPitch
+	// unused, but retained here as layout for the enum below
+	// struct tMatrixEulerFlags {
+	// 	bool swapXZ: 1;
+	// 	bool isExtrinsic: 1; // false = intrinsic, true = extrinsic
+	// 	bool swapYZ: 1;
+	// 	unsigned char primaryAxisIndex: 2; // index (0, 1, 2) into byte_866D9C[] that selects primary axis/order
+	// }; // { true,  false,  true, 2} = 0x15 = 21U: is Always used by the game
+	enum eMatrixEulerFlags : unsigned char {
+		SWAP_1ST_3RD_VALUES = 0x01, // The sequence is unaffected, but the Initial and Final values were swapped
+		__SWAP_2ND_3RD_SEQ = 0x04, // no need to use this flag as it is already applied at the sequence flags stated below
 
-			// The rest of the remaining sequence are yet to discover
-			// ...
-		} sequence;
-		struct {
-			bool swapXAndZ: 1;
-			e_AngleType angleType: 1;
-			bool swapYAndZ: 1;
-			unsigned char primaryAxisIndex: 2; // index (0, 1, 2) into byte_866D9C[] that selects primary axis/order
-	    } flags; // { true,  1,  true, 1} = 0x0F: is Always used by the game
+		INTRINSIC = 0x0,
+		EXTRINSIC = 0x2,
+
+		// X = Pitch, Y = Roll, Z = Yaw
+		SEQUENCE_XYZ = 0x00,
+		SEQUENCE_YZX = 0x08,
+		SEQUENCE_ZXY = 0x10,
+		SEQUENCE_XZY = SEQUENCE_XYZ | __SWAP_2ND_3RD_SEQ,
+		SEQUENCE_YXZ = SEQUENCE_YZX | __SWAP_2ND_3RD_SEQ,
+		SEQUENCE_ZYX = SEQUENCE_ZXY | __SWAP_2ND_3RD_SEQ,
+
+		DEFAULT = SEQUENCE_ZYX | SWAP_1ST_3RD_VALUES,
 	};
-
-	VALIDATE_SIZE(t_EulerAngleConversionSetup, 1);
+	VALIDATE_SIZE(eMatrixEulerFlags, 1);
 
     // RwV3d-like:
     CVector      right; // x-axis
@@ -89,8 +88,8 @@ public:
 	void RotateZ(float yaw);
 	void Rotate(CVector const &rotation);
 	void Rotate(float pitch, float roll, float yaw); // rotate on 3 axes
-	void ConvertToEulerAngles(float &initial, float &intermediate, float &final, t_EulerAngleConversionSetup flags) const;
-	void ConvertFromEulerAngles(float initial, float intermediate, float final, t_EulerAngleConversionSetup flags);
+	void ConvertToEulerAngles(float &initial, float &intermediate, float &final, eMatrixEulerFlags flags) const;
+	void ConvertFromEulerAngles(float initial, float intermediate, float final, eMatrixEulerFlags flags);
 	void Translate(CVector const &offset);
 	void Translate(float x, float y, float z); // move the position
 	void Reorthogonalise();

@@ -202,12 +202,12 @@ void CMatrix::Scale(float x, float y, float z) {
     plugin::CallMethod<0x459350, CMatrix *, float, float, float>(this, x, y, z);
 }
 
-void CMatrix::ConvertToEulerAngles(float &x, float &y, float &z, CMatrix::t_EulerAngleConversionSetup flags) const {
-	plugin::CallMethod<0x59A840, const CMatrix*, float*, float*, float*, t_EulerAngleConversionSetup>(this, &x, &y, &z, flags);
+void CMatrix::ConvertToEulerAngles(float &x, float &y, float &z, CMatrix::eMatrixEulerFlags flags) const {
+	plugin::CallMethod<0x59A840, const CMatrix*, float*, float*, float*, eMatrixEulerFlags>(this, &x, &y, &z, flags);
 }
 
-void CMatrix::ConvertFromEulerAngles(float x, float y, float z, CMatrix::t_EulerAngleConversionSetup flags) {
-	plugin::CallMethod<0x59AA40, CMatrix*, float, float, float, t_EulerAngleConversionSetup>(this, x, y, z, flags);
+void CMatrix::ConvertFromEulerAngles(float x, float y, float z, CMatrix::eMatrixEulerFlags flags) {
+	plugin::CallMethod<0x59AA40, CMatrix*, float, float, float, eMatrixEulerFlags>(this, x, y, z, flags);
 }
 
 void CMatrix::operator=(CMatrix const& rvalue)
