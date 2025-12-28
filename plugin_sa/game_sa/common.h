@@ -40,12 +40,9 @@ CPlayerPed * FindPlayerPed(int playerId = -1);
 CVehicle * FindPlayerVehicle(int playerId = -1, bool bIncludeRemote = false);
 // 2 players are playing
 bool InTwoPlayersMode();
-// vectorsub
-CVector VectorSub(CVector const& from, CVector const& what);
-// matrix * vector
-CVector Multiply3x3(CMatrix  const& matrix, CVector  const& vector);
-// transposed matrix * vector
-CVector MultiplyTransposed3x3(CMatrix const& matrix, CVector const& vector);
+// CVector VectorSub(CVector const& from, CVector const& what); // obsolete! Use CVector::operator-() or CVector::Diff instead
+// CVector Multiply3x3(CMatrix  const& matrix, CVector  const& vector); // obsolete! Use CMatrix::Multiply instead
+// CVector MultiplyTransposed3x3(CMatrix const& matrix, CVector const& vector); // obsolete! Use CMatrix::TransposedMultiply instead
 // returns player wanted
 CWanted * FindPlayerWanted(int playerId = -1);
 

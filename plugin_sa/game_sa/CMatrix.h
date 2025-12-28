@@ -62,15 +62,18 @@ public:
 	void Attach(RwMatrix *matrix, bool temporary);
 	void Detach();
 	void CopyOnlyMatrix(CMatrix const& matrix); // copy base RwMatrix to another matrix
-	void Update(); // update RwMatrix with attaching matrix. This doesn't check if attaching matrix is present, so use it only if you know it is present.
-	               // Using UpdateRW() is more safe since it perform this check.
-	void UpdateRW(); // update RwMatrix with attaching matrix.
-	void UpdateRW(RwMatrix *matrix); // update RwMatrix with this matrix
-	void SetUnity();
+	void CopyToRwMatrix(RwMatrix *matrix); // similar to UpdateRW(RwMatrixTag *)
+	void ConvertToEulerAngles(float &initial, float &intermediate, float &final, eMatrixEulerFlags flags) const;
+	void ConvertFromEulerAngles(float initial, float intermediate, float final, eMatrixEulerFlags flags);
+	void ForceUpVector(CVector const &vecUp);
+	void ForceUpVector(float x, float y, float z);
 	void ResetOrientation();
+    void Scale(float scale);
+    void Scale(float x, float y, float z);
 	void SetScale(float scale); // set (scaled)
 	void SetScale(CVector const &scale);
-	void SetScale(float x, float y, float z); // set (scaled)
+	void SetScale(float right, float forward, float up); // set (scaled)
+	void SetUnity();
 	void SetTranslateOnly(CVector const &pos);
 	void SetTranslateOnly(float x, float y, float z);
 	void SetTranslate(CVector const &pos);
@@ -78,25 +81,32 @@ public:
 	void SetRotateXOnly(float pitch);
 	void SetRotateYOnly(float roll);
 	void SetRotateZOnly(float yaw);
+	void SetRotateOnly(CVector const &rotation);
+	void SetRotateOnly(float pitch, float roll, float yaw); // sets the rotation on 3 axes
 	void SetRotateX(float pitch);
 	void SetRotateY(float roll);
 	void SetRotateZ(float yaw);
 	void SetRotate(CVector const &rotation);
 	void SetRotate(float pitch, float roll, float yaw); // sets the rotation on 3 axes + resets the position to origin(0, 0, 0)
-	void RotateX(float pitch);
-	void RotateY(float roll);
-	void RotateZ(float yaw);
-	void Rotate(CVector const &rotation);
-	void Rotate(float pitch, float roll, float yaw); // rotate on 3 axes
-	void ConvertToEulerAngles(float &initial, float &intermediate, float &final, eMatrixEulerFlags flags) const;
-	void ConvertFromEulerAngles(float initial, float intermediate, float final, eMatrixEulerFlags flags);
+	void SetRotate(CQuaternion  const& quat);
+	void RotateX(float pitch, bool keepPos = false);
+	void RotateY(float roll, bool keepPos = false);
+	void RotateZ(float yaw, bool keepPos = false);
+	void Rotate(CVector const &rotation, bool keepPos = false);
+	// This function is the straightforward version of:
+	// this->ConvertToEulerAngles(yaw, roll, pitch, CMatrix::INTRINSIC | CMatrix::SEQUENCE_ZYX)
+	void Rotate(float pitch, float roll, float yaw, bool keepPos = false);
+
+	CVector MultiplyRotation(CVector const &direction) const;
+	CVector MultiplyTransposedRotation(CVector const& direction) const;
 	void Translate(CVector const &offset);
 	void Translate(float x, float y, float z); // move the position
 	void Reorthogonalise();
-	void CopyToRwMatrix(RwMatrix *matrix); // similar to UpdateRW(RwMatrixTag *)
-	void SetRotate(CQuaternion  const& quat);
-    void Scale(float scale);
-    void Scale(float x, float y, float z);
+	void Update(); // update RwMatrix with attaching matrix. This doesn't check if attaching matrix is present, so use it only if you know it is present.
+	               // Using UpdateRW() is more safe since it perform this check.
+	void UpdateRW(); // update RwMatrix with attaching matrix.
+	void UpdateRW(RwMatrix *matrix); // update RwMatrix with this matrix
+	void UpdateMatrix(RwMatrix* rwMatrix);
 	void operator=(CMatrix const& right);
 	void operator+=(CMatrix const& right);
 	void operator*=(CMatrix const& right);

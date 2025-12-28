@@ -66,20 +66,23 @@ bool InTwoPlayersMode()
 	return ((bool (__cdecl *)())0x441390)();
 }
 
-CVector VectorSub(CVector const& from, CVector const& what)
-{
-	return ((CVector (__cdecl *)(CVector const&, CVector const&))0x40FE60)(from, what);
-}
+// obsolete! Use CVector::operator-() or CVector::Diff instead
+// CVector VectorSub(CVector const& from, CVector const& what)
+// {
+// 	return ((CVector (__cdecl *)(CVector const&, CVector const&))0x40FE60)(from, what);
+// }
 
-CVector Multiply3x3(CMatrix const& matrix, CVector const& vec)
-{
-	return plugin::CallAndReturn<CVector, 0x59C790, CMatrix  const&, CVector  const&>(matrix, vec);
-}
+// obsolete! Use CMatrix::MultiplyRotation instead
+// CVector Multiply3x3(CMatrix const& matrix, CVector const& vec)
+// {
+// 	return plugin::CallAndReturn<CVector, 0x59C790, CMatrix  const&, CVector  const&>(matrix, vec);
+// }
 
-CVector MultiplyTransposed3x3(CMatrix const& matrix, CVector const& vec)
-{
-	return plugin::CallAndReturn<CVector, 0x59C810, CVector  const&, CMatrix  const&>(vec, matrix);
-}
+// obsolete! Use CMatrix::MultiplyTransposedRotation instead
+// CVector MultiplyTransposed3x3(CMatrix const& matrix, CVector const& vec)
+// {
+// 	return plugin::CallAndReturn<CVector, 0x59C810, CVector  const&, CMatrix  const&>(vec, matrix);
+// }
 
 CWanted * FindPlayerWanted(int playerId)
 {
