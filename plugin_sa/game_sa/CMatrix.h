@@ -63,12 +63,13 @@ public:
 	void Detach();
 	void CopyOnlyMatrix(CMatrix const& matrix); // copy base RwMatrix to another matrix
 	void CopyToRwMatrix(RwMatrix *matrix); // similar to UpdateRW(RwMatrixTag *)
-	void ConvertToEulerAngles(float &initial, float &intermediate, float &final, eMatrixEulerFlags flags) const;
-	void ConvertFromEulerAngles(float initial, float intermediate, float final, eMatrixEulerFlags flags);
+	void ConvertToEulerAngles(float &initialAngle, float &intermediateAngle, float &finalAngle, eMatrixEulerFlags flags) const;
+	void ConvertFromEulerAngles(float initialAngle, float intermediateAngle, float finalAngle, eMatrixEulerFlags flags);
 	void ForceUpVector(CVector const &vecUp);
 	void ForceUpVector(float x, float y, float z);
 	void ResetOrientation();
     void Scale(float scale);
+    void Scale(CVector const &scale);
     void Scale(float x, float y, float z);
 	void SetScale(float scale); // set (scaled)
 	void SetScale(CVector const &scale);
@@ -129,3 +130,4 @@ VALIDATE_SIZE(CMatrix, 0x48);
 CMatrix operator*(CMatrix const&a, CMatrix const&b);
 CVector operator*(CMatrix const&a, CVector const&b);
 CMatrix operator+(CMatrix const&a, CMatrix const&b);
+bool operator==(CMatrix const&a, CMatrix const&b);

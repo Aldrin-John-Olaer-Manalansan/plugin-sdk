@@ -9,6 +9,10 @@
 
 #include <cstring>
 
+// The some parts of the game's mathematical computations uses double precision.
+// But since the discrepancy on using float instead of double is low
+// Then It's reasonable to use float to maximize performance in exchange for minimal tradeoff in precision.
+
 CMatrix::CMatrix(CMatrix const& matrix) 
 : m_pAttachMatrix(nullptr), m_bOwnsAttachedMatrix(false)
 {
@@ -127,9 +131,9 @@ void CMatrix::SetScale(float right, float forward, float up)
 {
 	//((void (__thiscall *)(CMatrix *, float, float, float))0x59AF00)(this, x, y, z);
 	
-    GetRight()	.Set(right,  0.0f,   0.0f);
-    GetForward().Set( 0.0f,  forward,  0.0f);
-    GetUp()		.Set( 0.0f,  0.0f,  up);
+    GetRight()	.Set(right,    0.0f, 0.0f);
+    GetForward().Set( 0.0f, forward, 0.0f);
+    GetUp()		.Set( 0.0f,    0.0f,   up);
     
 	pos.Set(0.0f);
 }
@@ -208,9 +212,7 @@ void CMatrix::SetRotateZOnly(float yaw)
 }
 
 void CMatrix::SetRotateOnly(float pitch, float roll, float yaw)
-{
-	//((void (__thiscall *)(CMatrix *, float, float, float))0x59B120)(this, pitch, roll, yaw);
-	
+{	
 	// precompute trigo ratios
     const float sX = sin(pitch);
     const float cX = cos(pitch);
@@ -219,19 +221,12 @@ void CMatrix::SetRotateOnly(float pitch, float roll, float yaw)
     const float sZ = sin(yaw);
     const float cZ = cos(yaw);
 
-	// reuse composite terms
 	const float sX_sY = sX * sY;
 	const float sX_cY = sX * cY;
-	const float cZ_cY = cZ * cY;
-	const float sZ_cY = sZ * cY;
-	const float cZ_sY = cZ * sY;
-	const float sZ_sY = sZ * sY;
-	const float sZ_cX = sZ * cX;
-	const float cZ_cX = cZ * cX;
 
-    GetRight()  .Set(cZ_cY - sZ*sX_sY, sZ_cY + cZ*sX_sY, -sY*cX);
-	GetForward().Set(          -sZ_cX,            cZ_cX,     sX);
-	GetUp()     .Set(cZ_sY + sZ*sX_cY, sZ_sY - cZ*sX_cY,  cY*cX);
+    GetRight()  .Set(cY*cZ - sX_sY*sZ, cY*sZ + sX_sY*cZ, -cX*sY);
+	GetForward().Set(          -cX*sZ,            cX*cZ,     sX);
+	GetUp()     .Set(sY*cZ + sX_cY*sZ, sY*sZ - sX_cY*cZ,  cX*cY);
 }
 
 void CMatrix::SetRotateOnly(CVector const &rotation) {
@@ -494,11 +489,27 @@ void CMatrix::CopyToRwMatrix(RwMatrix *matrix)
 }
 
 void CMatrix::Scale(float x, float y, float z) {
-    //plugin::CallMethod<0x459350, CMatrix *, float, float, float>(this, x, y, z);
+    //plugin::CallMethod<0x5A2E60, CMatrix *, float, float, float>(this, x, y, z);
+
+    CVector &right = GetRight();
+	CVector &forward = GetForward();
+	CVector &up = GetUp();
     
-    GetRight()   *= x;
-    GetForward() *= y;
-    GetUp()      *= z;
+    right.x *= x;
+    right.y *= y;
+    right.z *= z;
+    
+    forward.x *= x;
+    forward.y *= y;
+    forward.z *= z;
+    
+    up.x *= x;
+    up.y *= y;
+    up.z *= z;
+}
+
+void CMatrix::Scale(CVector const &scale) {
+    Scale(scale.x, scale.y, scale.z);
 }
 
 void CMatrix::Scale(float scale) {
@@ -523,131 +534,146 @@ void CMatrix::ForceUpVector(float x, float y, float z) {
     ForceUpVector(CVector(x, y, z));
 }
 
-void CMatrix::ConvertToEulerAngles(float &initial, float &intermediate, float &final, CMatrix::eMatrixEulerFlags flags) const {
+// flags must be between 0-23
+void CMatrix::ConvertToEulerAngles(float &initialAngle, float &intermediateAngle, float &finalAngle, CMatrix::eMatrixEulerFlags flags) const {
 	//plugin::CallMethod<0x59A840, const CMatrix*, float*, float*, float*, eMatrixEulerFlags>(this, &initial, &intermediate, &final, flags);
 
     constexpr float gimbalLockThreshold = 0.0000019073486f;
-    float matrix[3][3];
-    const CVector &right = GetRight();
-	const CVector &forward = GetForward();
-	const CVector &up = GetUp();
 
-    matrix[0][0] = right.x;
-    matrix[0][1] = right.y;
-    matrix[0][2] = right.z;
-
-    matrix[1][0] = forward.x;
-    matrix[1][1] = forward.y;
-    matrix[1][2] = forward.z;
-
-    matrix[2][0] = up.x;
-    matrix[2][1] = up.y;
-    matrix[2][2] = up.z;
-
-    const bool swap2ndAnd3rdSeq = (flags & __SWAP_2ND_3RD_SEQ) != 0;
-
-    unsigned char idx1 = ((flags >> 3) & 0x3); // primaryAxisIndex
-    if (idx1 >= 3) idx1 -= 3;
-    unsigned char idx2 = (1 + idx1 + swap2ndAnd3rdSeq);
-    if (idx2 >= 3) idx2 -= 3;
-    unsigned char idx3 = (2 + idx1 - swap2ndAnd3rdSeq);
-    if (idx3 >= 3) idx3 -= 3;
-
-    if (flags & eMatrixEulerFlags::EXTRINSIC) {
-        float r13 = matrix[idx1][idx3];
-        float r12 = matrix[idx1][idx2];
-        float cy = sqrt(r12 * r12 + r13 * r13);
-        if (cy > gimbalLockThreshold) {
-            initial      = atan2(                r12,                 r13);
-            intermediate = atan2(                 cy,  matrix[idx1][idx1]);
-            final        = atan2( matrix[idx2][idx3], -matrix[idx3][idx1]);
-        } else {
-            initial      = atan2(-matrix[idx2][idx3],  matrix[idx2][idx2]);
-            intermediate = atan2(                 cy,  matrix[idx1][idx1]);
-            final        = 0.0f;
-        }
-    } else {
-        float r21 = matrix[idx2][idx1];
-        float r11 = matrix[idx1][idx1];
-        float cy = sqrt(r11 * r11 + r21 * r21);
-        if (cy > gimbalLockThreshold) {
-            initial      = atan2( matrix[idx3][idx2], matrix[idx3][idx3]);
-            intermediate = atan2(-matrix[idx3][idx1],                 cy);
-            final        = atan2(                r21,                r11);
-        } else {
-            initial      = atan2(-matrix[idx2][idx3], matrix[idx2][idx2]);
-            intermediate = atan2(-matrix[idx3][idx1], cy);
-            final        = 0.0f;
-        }
-    }
-
-    if (flags & eMatrixEulerFlags::SWAP_1ST_3RD_VALUES) {
-        std::swap(initial, final);
-    }
-
-    if (swap2ndAnd3rdSeq) {
-        initial      *= -1.0f;
-        intermediate *= -1.0f;
-        final        *= -1.0f;
-    }
-}
-
-void CMatrix::ConvertFromEulerAngles(float initial, float intermediate, float final, CMatrix::eMatrixEulerFlags flags) {
-	//plugin::CallMethod<0x59AA40, CMatrix*, float, float, float, eMatrixEulerFlags>(this, initial, intermediate, final, flags);
+    const float matrix[3][3] = {
+        {   GetRight().x,   GetRight().y,   GetRight().z },
+		{ GetForward().x, GetForward().y, GetForward().z },
+		{      GetUp().x,      GetUp().y,      GetUp().z }
+    };
     
     const bool swap2ndAnd3rdSeq = (flags & __SWAP_2ND_3RD_SEQ) != 0;
 
-    unsigned char iInd1 = ((flags >> 3) & 0x3); // primaryAxisIndex
-    if (iInd1 >= 3) iInd1 -= 3;
-    unsigned char iInd2 = (1 + iInd1 + swap2ndAnd3rdSeq);
-    if (iInd2 >= 3) iInd2 -= 3;
-    unsigned char iInd3 = (2 + iInd1 - swap2ndAnd3rdSeq);
-    if (iInd3 >= 3) iInd3 -= 3;
+    // compute permutation indeces
+    constexpr unsigned char BYTE_866D9C[4] = { 0, 1, 2, 0 };
+    constexpr unsigned char BYTE_866D94[5] = { 1, 2, 0, 1, 0 };
+    const unsigned char rowIndex = BYTE_866D9C[ flags >> 3 & 3u ];
+    const unsigned char idxA = BYTE_866D94[ rowIndex - swap2ndAnd3rdSeq + 1 ];
+    const unsigned char idxB = BYTE_866D94[ rowIndex + swap2ndAnd3rdSeq ];
+    // The permutation indeces computation of the game as seen above seems a bit incorrect when idxA or idxB becomes 4
+    // Looks like a minor oversight in the original code, so the computation below corrects it
+    // but for now I will leave it commented out
+    // unsigned char idx1 = ((flags >> 3) & 3); // primaryAxisIndex
+    // if (idx1 >= 3) idx1 -= 3;
+    // unsigned char idx2 = (1 + idx1 + swap2ndAnd3rdSeq);
+    // if (idx2 >= 3) idx2 -= 3;
+    // unsigned char idx3 = (2 + idx1 - swap2ndAnd3rdSeq);
+    // if (idx3 >= 3) idx3 -= 3;
+
+    if (flags & eMatrixEulerFlags::EXTRINSIC) {
+        float A = matrix[rowIndex][idxA];
+        float B = matrix[rowIndex][idxB];
+        float hypotenuse = std::sqrt(B*B + A*A);
+
+        if (hypotenuse > gimbalLockThreshold) {
+            initialAngle = std::atan2(B, A);
+            intermediateAngle = std::atan2(hypotenuse, matrix[rowIndex][rowIndex]);
+            finalAngle = std::atan2(matrix[idxB][rowIndex], -matrix[idxA][rowIndex]);
+        } else {
+            initialAngle = std::atan2(-matrix[idxB][idxA], matrix[idxB][idxB]);
+            intermediateAngle = std::atan2(-matrix[idxA][rowIndex], hypotenuse);
+            finalAngle = 0.0f;
+        }
+    } else {
+        float A = matrix[idxB][rowIndex];
+        float diag = matrix[rowIndex][rowIndex];
+        float hypotenuse = std::sqrt(A*A + diag*diag);
+
+        if (hypotenuse > gimbalLockThreshold) {
+            initialAngle = std::atan2(matrix[idxA][idxB], matrix[idxA][idxA]);
+            intermediateAngle = std::atan2(-matrix[idxA][rowIndex], hypotenuse);
+            finalAngle = std::atan2(A, diag);
+        } else {
+            initialAngle = std::atan2(-matrix[idxB][idxA], matrix[idxB][idxB]);
+            intermediateAngle = std::atan2(-matrix[idxA][rowIndex], hypotenuse);
+            finalAngle = 0.0f;
+        }
+    }
+
+    if (swap2ndAnd3rdSeq) {
+        initialAngle      *= -1.0f;
+        intermediateAngle *= -1.0f;
+        finalAngle        *= -1.0f;
+    }
+
+    if (flags & eMatrixEulerFlags::SWAP_1ST_3RD_VALUES) {
+        std::swap(initialAngle, finalAngle);
+    }
+}
+
+// flags must be between 0-23
+void CMatrix::ConvertFromEulerAngles(float initialAngle, float intermediateAngle, float finalAngle, CMatrix::eMatrixEulerFlags flags) {
+	//plugin::CallMethod<0x59AA40, CMatrix*, float, float, float, eMatrixEulerFlags>(this, initial, intermediate, final, flags);
+    
+    const bool swap2ndAnd3rdSeq = (flags & __SWAP_2ND_3RD_SEQ) != 0;
+    
+    constexpr unsigned char BYTE_866D9C[4] = { 0, 1, 2, 0 };
+    constexpr unsigned char BYTE_866D94[5] = { 1, 2, 0, 1, 0 };
+    const unsigned char idx1 = BYTE_866D9C[ flags >> 3 & 3u ];
+    const unsigned char idx3 = BYTE_866D94[ idx1 - swap2ndAnd3rdSeq + 1 ];
+    const unsigned char idx2 = BYTE_866D94[ idx1 + swap2ndAnd3rdSeq ];
+    // The permutation indeces computation of the game as seen above seems a bit incorrect when idxA or idxB becomes 4
+    // Looks like a minor oversight in the original code, so the computation below corrects it
+    // but for now I will leave it commented out
+    // unsigned char idx1 = ((flags >> 3) & 3); // primaryAxisIndex
+    // if (idx1 >= 3) idx1 -= 3;
+    // unsigned char idx2 = (1 + idx1 + swap2ndAnd3rdSeq);
+    // if (idx2 >= 3) idx2 -= 3;
+    // unsigned char idx3 = (2 + idx1 - swap2ndAnd3rdSeq);
+    // if (idx3 >= 3) idx3 -= 3;
 
     float matrix[3][3];
 
-    if (flags & eMatrixEulerFlags::SWAP_1ST_3RD_VALUES)
-        std::swap(initial, final);
+    if (flags & eMatrixEulerFlags::SWAP_1ST_3RD_VALUES) {
+        std::swap(initialAngle, finalAngle);
+    }
 
     if (swap2ndAnd3rdSeq) {
-        initial      *= -1.0f;
-        intermediate *= -1.0f;
-        final        *= -1.0f;
+        initialAngle      *= -1.0f;
+        intermediateAngle *= -1.0f;
+        finalAngle        *= -1.0f;
     }
 
-    const float fSinX = sin(initial);
-    const float fCosX = cos(initial);
-    const float fSinY = sin(intermediate);
-    const float fCosY = cos(intermediate);
-    const float fSinZ = sin(final);
-    const float fCosZ = cos(final);
-
+    const float cX = cos(initialAngle);
+    const float cY = cos(intermediateAngle);
+    const float cZ = cos(finalAngle);
+    const float sX = sin(initialAngle);
+    const float sY = sin(intermediateAngle);
+    const float sZ = sin(finalAngle);
+    const float cX_cZ = cX * cZ;
+    const float cX_sZ = cX * sZ;
+    const float sX_cZ = sX * cZ;
+    const float sX_sZ = sX * sZ;
     if (flags & eMatrixEulerFlags::EXTRINSIC) {
-        matrix[iInd1][iInd1] = fCosY;
-        matrix[iInd1][iInd2] = fSinX*fSinY;
-        matrix[iInd1][iInd3] = fCosX*fSinY;
+        matrix[idx1][idx1] = cY;
+        matrix[idx1][idx2] = sX * sY;
+        matrix[idx1][idx3] = cX * sY;
 
-        matrix[iInd2][iInd1] =   fSinY*fSinZ;
-        matrix[iInd2][iInd2] =   fCosX*fCosY  - fCosY*fSinX*fSinZ;
-        matrix[iInd2][iInd3] = -(fSinX*fCosZ) -(fCosX*fCosY*fSinZ);
+        matrix[idx2][idx1] = sY * sZ;
+        matrix[idx2][idx2] = cX_cZ - sX_sZ * cY;
+        matrix[idx2][idx3] = -(cX_sZ * cY) - sX_cZ;
 
-        matrix[iInd3][iInd1] = -(fCosZ*fSinY);
-        matrix[iInd3][iInd2] =   fCosX*fSinZ  + fCosY*fCosZ*fSinX;
-        matrix[iInd3][iInd3] = -(fSinX*fSinZ) + fCosX*fCosY*fCosZ;
+        matrix[idx3][idx1] = -(sY * cZ);
+        matrix[idx3][idx2] = sX_cZ * cY + cX_sZ;
+        matrix[idx3][idx3] = cX_cZ * cY - sX_sZ;
     } else {
-        matrix[iInd1][iInd1] =   fCosY*fCosZ;
-        matrix[iInd1][iInd2] = -(fCosX*fSinZ) + fCosZ*fSinX*fSinY;
-        matrix[iInd1][iInd3] =   fSinX*fSinZ  + fCosX*fCosZ*fSinY;
+        matrix[idx1][idx1] = cZ * cY;
+        matrix[idx1][idx2] = sX_cZ * sY - cX_sZ;
+        matrix[idx1][idx3] = cX_cZ * sY + sX_sZ;
 
-        matrix[iInd2][iInd1] =   fCosY*fSinZ;
-        matrix[iInd2][iInd2] =   fCosX*fCosZ  + fSinX*fSinY*fSinZ;
-        matrix[iInd2][iInd3] = -(fCosZ*fSinX) + fCosX*fSinY*fSinZ;
+        matrix[idx2][idx1] = sZ * cY;
+        matrix[idx2][idx2] = sX_sZ * sY + cX_cZ;
+        matrix[idx2][idx3] = cX_sZ * sY - sX_cZ;
 
-        matrix[iInd3][iInd1] = -fSinY;
-        matrix[iInd3][iInd2] =  fCosY*fSinX;
-        matrix[iInd3][iInd3] =  fCosX*fCosY;
+        matrix[idx3][idx1] = -sY;
+        matrix[idx3][idx2] = sX * cY;
+        matrix[idx3][idx3] = cY * cX;
     }
-
+  
     GetRight().Set  (matrix[0][0], matrix[0][1], matrix[0][2]);
     GetForward().Set(matrix[1][0], matrix[1][1], matrix[1][2]);
     GetUp().Set     (matrix[2][0], matrix[2][1], matrix[2][2]);
@@ -717,6 +743,13 @@ CMatrix operator+(CMatrix const&a, CMatrix const&b) {
     result.pos          = a.pos          + b.pos;
 
     return result;
+}
 
-
+bool operator==(CMatrix const&a, CMatrix const&b) {
+    return a.m_pAttachMatrix == b.m_pAttachMatrix
+        && a.m_bOwnsAttachedMatrix == b.m_bOwnsAttachedMatrix
+        && a.GetRight() == b.GetRight()
+        && a.GetForward() == b.GetForward()
+        && a.GetUp() == b.GetUp()
+        && a.pos == b.pos;
 }

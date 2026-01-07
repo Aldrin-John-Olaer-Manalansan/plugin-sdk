@@ -1,6 +1,7 @@
 #include <plugin.h>
 #include "utest.h"
-#include "Test_CVector.h"
+//#include "Test_CVector.h"
+#include "Test_PluginSA_CMatrix.h"
 
 using namespace plugin;
 
